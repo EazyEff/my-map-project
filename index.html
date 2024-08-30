@@ -2,30 +2,74 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yandex Map</title>
+    <title>Карта с метками</title>
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
-</head>
-<body>
-    <h1>Моя карта</h1>
-    <div id="map" style="width: 100%; height: 500px;"></div>
-
-    <script>
+    <script type="text/javascript">
         ymaps.ready(init);
+
+        var placemarks = [];
 
         function init() {
             var myMap = new ymaps.Map("map", {
-                center: [55.76, 37.64],
+                center: [55.7558, 37.6173],
                 zoom: 10
             });
 
-            var myPlacemark = new ymaps.Placemark([55.76, 37.64], {
-                hintContent: 'Москва',
-                balloonContent: 'Столица России'
-            });
+            fetch('placemarks.json')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(function(coords) {
+                        var myPlacemark = new ymaps.Placemark(coords, {
+                            hintContent: 'Метка',
+                            balloonContent: 'Координаты: ' + coords
+                        }, {
+                            preset: 'islands#redDotIcon'
+                        });
+                        myMap.geoObjects.add(myPlacemark);
+                        placemarks.push(coords);
 
-            myMap.geoObjects.add(myPlacemark);
+                        myPlacemark.events.add('click', function () {
+                            myMap.geoObjects.remove(myPlacemark);
+                            placemarks = placemarks.filter(function (item) {
+                                return item !== coords;
+                            });
+                            savePlacemarks();
+                        });
+                    });
+                });
+
+            myMap.events.add('click', function (e) {
+                var coords = e.get('coords');
+                var myPlacemark = new ymaps.Placemark(coords, {
+                    hintContent: 'Метка',
+                    balloonContent: 'Координаты: ' + coords
+                }, {
+                    preset: 'islands#redDotIcon'
+                });
+
+                myMap.geoObjects.add(myPlacemark);
+                placemarks.push(coords);
+
+                myPlacemark.events.add('click', function () {
+                    myMap.geoObjects.remove(myPlacemark);
+                    placemarks = placemarks.filter(function (item) {
+                        return item !== coords;
+                    });
+                    savePlacemarks();
+                });
+
+                savePlacemarks();
+            });
+        }
+
+        function savePlacemarks() {
+            // Данные можно сохранить в локальный хранилище (localStorage) или отправить на сервер, если есть возможность.
+            localStorage.setItem('placemarks', JSON.stringify(placemarks));
         }
     </script>
+</head>
+<body>
+    <h1>Карта с метками</h1>
+    <div id="map" style="width: 100%; height: 500px;"></div>
 </body>
 </html>
