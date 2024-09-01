@@ -7,7 +7,7 @@
     <script type="text/javascript">
         ymaps.ready(init);
 
-        var placemarks = [];
+        var placemarks = JSON.parse(localStorage.getItem('placemarks')) || [];
 
         function init() {
             var myMap = new ymaps.Map("map", {
@@ -15,56 +15,43 @@
                 zoom: 10
             });
 
-            fetch('placemarks.json')
-                .then(response => response.json())
-                .then(data => {
-                    data.forEach(function(coords) {
-                        var myPlacemark = new ymaps.Placemark(coords, {
-                            hintContent: 'Метка',
-                            balloonContent: 'Координаты: ' + coords
-                        }, {
-                            preset: 'islands#redDotIcon'
-                        });
-                        myMap.geoObjects.add(myPlacemark);
-                        placemarks.push(coords);
+            // Загружаем сохраненные метки из localStorage
+            placemarks.forEach(function(coords) {
+                createPlacemark(myMap, coords);
+            });
 
-                        myPlacemark.events.add('click', function () {
-                            myMap.geoObjects.remove(myPlacemark);
-                            placemarks = placemarks.filter(function (item) {
-                                return item !== coords;
-                            });
-                            savePlacemarks();
-                        });
-                    });
-                });
-
+            // Добавление метки по клику на карте
             myMap.events.add('click', function (e) {
                 var coords = e.get('coords');
-                var myPlacemark = new ymaps.Placemark(coords, {
-                    hintContent: 'Метка',
-                    balloonContent: 'Координаты: ' + coords
-                }, {
-                    preset: 'islands#redDotIcon'
-                });
-
-                myMap.geoObjects.add(myPlacemark);
+                createPlacemark(myMap, coords);
                 placemarks.push(coords);
+                savePlacemarks();
+            });
+        }
 
-                myPlacemark.events.add('click', function () {
-                    myMap.geoObjects.remove(myPlacemark);
-                    placemarks = placemarks.filter(function (item) {
-                        return item !== coords;
-                    });
-                    savePlacemarks();
+        function createPlacemark(map, coords) {
+            var myPlacemark = new ymaps.Placemark(coords, {
+                hintContent: 'Метка',
+                balloonContent: 'Координаты: ' + coords
+            }, {
+                preset: 'islands#redDotIcon'
+            });
+
+            map.geoObjects.add(myPlacemark);
+
+            // Удаление метки по клику
+            myPlacemark.events.add('click', function () {
+                map.geoObjects.remove(myPlacemark);
+                placemarks = placemarks.filter(function (item) {
+                    return item[0] !== coords[0] || item[1] !== coords[1];
                 });
-
                 savePlacemarks();
             });
         }
 
         function savePlacemarks() {
-            // Данные можно сохранить в локальный хранилище (localStorage) или отправить на сервер, если есть возможность.
             localStorage.setItem('placemarks', JSON.stringify(placemarks));
+            console.log('Метки сохранены в localStorage');
         }
     </script>
 </head>
