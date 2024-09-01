@@ -67,9 +67,32 @@
         }
 
         function savePlacemarks() {
-            // Сохраняем метки в localStorage и выводим сообщение в консоль
-            localStorage.setItem('placemarks', JSON.stringify(placemarks));
-            console.log('Метки сохранены в localStorage');
+            // Отправляем метки на сервер (GitHub API)
+            fetch('https://api.github.com/repos/YOUR_USERNAME/YOUR_REPO_NAME/contents/path/to/placemarks.json', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'token YOUR_GITHUB_TOKEN',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'Update placemarks',
+                    content: btoa(JSON.stringify(placemarks)),
+                    sha: getFileSha()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Метки сохранены на GitHub:', data);
+            })
+            .catch(error => {
+                console.error('Ошибка при сохранении меток на GitHub:', error);
+            });
+        }
+
+        function getFileSha() {
+            // Здесь вы должны получить SHA текущего файла placemarks.json
+            // Для упрощения примера это оставлено как заглушка
+            return 'CURRENT_FILE_SHA';
         }
     </script>
 </head>
