@@ -5,9 +5,23 @@
     <title>Карта с метками</title>
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
     <script type="text/javascript">
-        ymaps.ready(init);
+        // Получаем метки из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const placemarksParam = urlParams.get('placemarks');
 
-        var placemarks = JSON.parse(localStorage.getItem('placemarks')) || [];
+        let placemarks = [];
+        if (placemarksParam) {
+            try {
+                placemarks = JSON.parse(decodeURIComponent(placemarksParam));
+            } catch (e) {
+                console.error("Ошибка при парсинге меток из URL:", e);
+            }
+        } else {
+            // Если меток в URL нет, загружаем из localStorage (резервный вариант)
+            placemarks = JSON.parse(localStorage.getItem('placemarks')) || [];
+        }
+
+        ymaps.ready(init);
 
         function init() {
             var myMap = new ymaps.Map("map", {
@@ -15,7 +29,7 @@
                 zoom: 10
             });
 
-            // Загружаем сохраненные метки из localStorage
+            // Загружаем сохраненные метки
             placemarks.forEach(function(coords) {
                 createPlacemark(myMap, coords);
             });
@@ -50,24 +64,13 @@
         }
 
         function savePlacemarks() {
+            // Сохраняем метки в localStorage и выводим сообщение в консоль
             localStorage.setItem('placemarks', JSON.stringify(placemarks));
             console.log('Метки сохранены в localStorage');
         }
     </script>
 </head>
 <body>
-<script type="text/javascript">
-    // Добавляем обработчик для возврата меток
-    window.onload = function() {
-        if (window.location.search.includes('getPlacemarks')) {
-            // Получаем метки из localStorage
-            var placemarks = localStorage.getItem('placemarks');
-            // Устанавливаем тип контента на JSON и возвращаем метки
-            document.body.innerHTML = JSON.stringify(placemarks);
-        }
-    }
-</script>
-
     <h1>Карта с метками</h1>
     <div id="map" style="width: 100%; height: 500px;"></div>
 </body>
