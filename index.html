@@ -5,21 +5,9 @@
     <title>Карта с метками</title>
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
     <script type="text/javascript">
-        // Получаем метки из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const placemarksParam = urlParams.get('placemarks');
-        const getPlacemarks = urlParams.get('getPlacemarks');
-
-        let placemarks = [];
-        if (placemarksParam) {
-            try {
-                placemarks = JSON.parse(decodeURIComponent(placemarksParam));
-            } catch (e) {
-                console.error("Ошибка при парсинге меток из URL:", e);
-            }
-        }
-
         ymaps.ready(init);
+
+        var placemarks = [];
 
         function init() {
             var myMap = new ymaps.Map("map", {
@@ -27,23 +15,23 @@
                 zoom: 10
             });
 
-            // Загружаем сохраненные метки
-            placemarks.forEach(function(coords) {
-                createPlacemark(myMap, coords);
-            });
+            // Чтение меток из URL
+            var urlParams = new URLSearchParams(window.location.search);
+            var placemarksParam = urlParams.get('placemarks');
+            if (placemarksParam) {
+                placemarks = JSON.parse(decodeURIComponent(placemarksParam));
+                placemarks.forEach(function(coords) {
+                    createPlacemark(myMap, coords);
+                });
+            }
 
             // Добавление метки по клику на карте
             myMap.events.add('click', function (e) {
                 var coords = e.get('coords');
                 createPlacemark(myMap, coords);
                 placemarks.push(coords);
-                savePlacemarks();
+                updateUrl();
             });
-
-            // Если параметр getPlacemarks присутствует, возвращаем метки
-            if (getPlacemarks) {
-                document.body.innerHTML = JSON.stringify(placemarks);
-            }
         }
 
         function createPlacemark(map, coords) {
@@ -62,37 +50,15 @@
                 placemarks = placemarks.filter(function (item) {
                     return item[0] !== coords[0] || item[1] !== coords[1];
                 });
-                savePlacemarks();
+                updateUrl();
             });
         }
 
-        function savePlacemarks() {
-            // Отправляем метки на сервер (GitHub API)
-            fetch('https://api.github.com/repos/eazyeff.github.io/my-map-project/placemarks.json', {
-                method: 'PUT',
-                headers: {
-                    'Authorization': 'token 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',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: 'Update placemarks',
-                    content: btoa(JSON.stringify(placemarks)),
-                    sha: getFileSha()
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Метки сохранены на GitHub:', data);
-            })
-            .catch(error => {
-                console.error('Ошибка при сохранении меток на GitHub:', error);
-            });
-        }
-
-        function getFileSha() {
-            // Здесь вы должны получить SHA текущего файла placemarks.json
-            // Для упрощения примера это оставлено как заглушка
-            return 'CURRENT_FILE_SHA';
+        function updateUrl() {
+            var encodedPlacemarks = encodeURIComponent(JSON.stringify(placemarks));
+            var newUrl = window.location.pathname + '?placemarks=' + encodedPlacemarks;
+            window.history.replaceState(null, null, newUrl);
+            console.log('URL обновлен:', newUrl);
         }
     </script>
 </head>
