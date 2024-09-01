@@ -56,6 +56,18 @@
     </script>
 </head>
 <body>
+<script type="text/javascript">
+    // Добавляем обработчик для возврата меток
+    window.onload = function() {
+        if (window.location.search.includes('getPlacemarks')) {
+            // Получаем метки из localStorage
+            var placemarks = localStorage.getItem('placemarks');
+            // Устанавливаем тип контента на JSON и возвращаем метки
+            document.body.innerHTML = JSON.stringify(placemarks);
+        }
+    }
+</script>
+
     <h1>Карта с метками</h1>
     <div id="map" style="width: 100%; height: 500px;"></div>
 </body>
