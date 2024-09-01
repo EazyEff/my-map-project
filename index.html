@@ -8,6 +8,7 @@
         // Получаем метки из URL
         const urlParams = new URLSearchParams(window.location.search);
         const placemarksParam = urlParams.get('placemarks');
+        const getPlacemarks = urlParams.get('getPlacemarks');
 
         let placemarks = [];
         if (placemarksParam) {
@@ -16,9 +17,6 @@
             } catch (e) {
                 console.error("Ошибка при парсинге меток из URL:", e);
             }
-        } else {
-            // Если меток в URL нет, загружаем из localStorage (резервный вариант)
-            placemarks = JSON.parse(localStorage.getItem('placemarks')) || [];
         }
 
         ymaps.ready(init);
@@ -41,6 +39,11 @@
                 placemarks.push(coords);
                 savePlacemarks();
             });
+
+            // Если параметр getPlacemarks присутствует, возвращаем метки
+            if (getPlacemarks) {
+                document.body.innerHTML = JSON.stringify(placemarks);
+            }
         }
 
         function createPlacemark(map, coords) {
